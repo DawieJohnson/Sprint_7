@@ -1,8 +1,9 @@
 package order;
 
+import base.BaseTest;
+import api.OrderApi;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import models.Order;
 import org.junit.After;
@@ -13,11 +14,11 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.Matchers.notNullValue;
 
 @RunWith(Parameterized.class)
-public class OrderCreationTest {
+public class OrderCreationTest extends BaseTest {
 
     private final List<String> color;
     private Integer trackNumber;
@@ -39,10 +40,8 @@ public class OrderCreationTest {
     @Test
     @DisplayName("Создание заказа с разными вариантами цвета")
     public void orderCanBeCreatedWithDifferentColors() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
-
         Order order = createOrderWithColor(color);
-        Response response = createOrder(order);
+        Response response = OrderApi.createOrder(order);
 
         trackNumber = response.jsonPath().getInt("track");
         verifyOrderCreatedSuccessfully(response);
@@ -63,19 +62,10 @@ public class OrderCreationTest {
         );
     }
 
-    @Step("Создать заказ через API")
-    private Response createOrder(Order order) {
-        return given()
-                .header("Content-type", "application/json")
-                .body(order)
-                .when()
-                .post("/api/v1/orders");
-    }
-
     @Step("Проверить успешное создание заказа")
     private void verifyOrderCreatedSuccessfully(Response response) {
         response.then()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body("track", notNullValue());
     }
 
@@ -83,13 +73,9 @@ public class OrderCreationTest {
     @Step("Отменить тестовый заказ")
     public void tearDown() {
         if (trackNumber != null) {
-            given()
-                    .header("Content-type", "application/json")
-                    .body("{\"track\": " + trackNumber + "}")
-                    .when()
-                    .put("/api/v1/orders/cancel")
+            OrderApi.cancelOrder(trackNumber)
                     .then()
-                    .statusCode(200);
+                    .statusCode(SC_OK);
         }
     }
 }

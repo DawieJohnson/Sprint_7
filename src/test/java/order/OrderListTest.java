@@ -1,8 +1,9 @@
 package order;
 
+import base.BaseTest;
+import api.OrderApi;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import models.Order;
 import org.junit.After;
@@ -11,18 +12,16 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.Matchers.notNullValue;
 
-public class OrderListTest {
+public class OrderListTest extends BaseTest {
 
     private Integer trackNumber;
 
     @Before
-    @Step("Настройка базового URI и создание тестового заказа")
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
-
+    @Step("Создание тестового заказа")
+    public void setUpTestData() {
         Order order = new Order(
                 "Test",
                 "User",
@@ -35,35 +34,17 @@ public class OrderListTest {
                 Arrays.asList("BLACK")
         );
 
-        Response response = given()
-                .header("Content-type", "application/json")
-                .body(order)
-                .when()
-                .post("/api/v1/orders");
-
+        Response response = OrderApi.createOrder(order);
         trackNumber = response.jsonPath().getInt("track");
     }
 
     @Test
     @DisplayName("В тело ответа возвращается список заказов")
     public void orderListReturnsListOfOrders() {
-        Response response = getOrderList();
+        Response response = OrderApi.getOrderList();
 
-        verifyOrderListResponse(response);
-    }
-
-    @Step("Получить список заказов")
-    private Response getOrderList() {
-        return given()
-                .header("Content-type", "application/json")
-                .when()
-                .get("/api/v1/orders");
-    }
-
-    @Step("Проверить что возвращается список заказов")
-    private void verifyOrderListResponse(Response response) {
         response.then()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body("orders", notNullValue());
     }
 
@@ -71,13 +52,9 @@ public class OrderListTest {
     @Step("Удалить тестовый заказ")
     public void tearDown() {
         if (trackNumber != null) {
-            given()
-                    .header("Content-type", "application/json")
-                    .body("{\"track\": " + trackNumber + "}")
-                    .when()
-                    .put("/api/v1/orders/cancel")
+            OrderApi.cancelOrder(trackNumber)
                     .then()
-                    .statusCode(200);
+                    .statusCode(SC_OK);
         }
     }
 }
