@@ -56,7 +56,7 @@ public class OrderCreationTest extends BaseTest {
                 "4",
                 "+7 800 355 35 35",
                 5,
-                "2020-06-06",
+                "2024-12-31",
                 "Saske, come back to Konoha",
                 color
         );
@@ -72,10 +72,15 @@ public class OrderCreationTest extends BaseTest {
     @After
     @Step("Отменить тестовый заказ")
     public void tearDown() {
-        if (trackNumber != null) {
-            OrderApi.cancelOrder(trackNumber)
-                    .then()
-                    .statusCode(SC_OK);
+        try {
+            if (trackNumber != null) {
+                Response response = OrderApi.cancelOrder(trackNumber);
+                if (response.statusCode() != SC_OK) {
+                    System.err.println("Не удалось отменить заказ: " + trackNumber);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка при очистке тестовых данных: " + e.getMessage());
         }
     }
 }

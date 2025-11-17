@@ -29,7 +29,7 @@ public class OrderListTest extends BaseTest {
                 "1",
                 "+7 900 000 00 00",
                 1,
-                "2024-01-01",
+                "2024-12-31",
                 "Test comment",
                 Arrays.asList("BLACK")
         );
@@ -51,10 +51,15 @@ public class OrderListTest extends BaseTest {
     @After
     @Step("Удалить тестовый заказ")
     public void tearDown() {
-        if (trackNumber != null) {
-            OrderApi.cancelOrder(trackNumber)
-                    .then()
-                    .statusCode(SC_OK);
+        try {
+            if (trackNumber != null) {
+                Response response = OrderApi.cancelOrder(trackNumber);
+                if (response.statusCode() != SC_OK) {
+                    System.err.println("Не удалось отменить заказ: " + trackNumber);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка при очистке тестовых данных: " + e.getMessage());
         }
     }
 }

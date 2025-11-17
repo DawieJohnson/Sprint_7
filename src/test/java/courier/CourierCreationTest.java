@@ -85,8 +85,12 @@ public class CourierCreationTest extends BaseTest {
     @After
     @Step("Удалить тестового курьера")
     public void tearDown() {
-        if (courier != null && courier.getLogin() != null) {
-            CourierApi.deleteCourierByLogin(courier.getLogin(), courier.getPassword());
+        try {
+            if (courier != null && courier.getLogin() != null) {
+                CourierApi.safeDeleteCourier(courier.getLogin(), courier.getPassword());
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка при очистке тестовых данных: " + e.getMessage());
         }
     }
 }

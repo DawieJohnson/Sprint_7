@@ -1,5 +1,6 @@
 package api;
 
+import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import models.Courier;
 import static io.restassured.RestAssured.given;
@@ -7,6 +8,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 
 public class CourierApi {
 
+    @Step("Создание курьера")
     public static Response createCourier(Courier courier) {
         return given()
                 .header("Content-type", "application/json")
@@ -15,6 +17,7 @@ public class CourierApi {
                 .post("/api/v1/courier");
     }
 
+    @Step("Авторизация курьера")
     public static Response loginCourier(String login, String password) {
         Courier loginData = new Courier(login, password, null);
         return given()
@@ -24,19 +27,22 @@ public class CourierApi {
                 .post("/api/v1/courier/login");
     }
 
+    @Step("Удаление курьера")
     public static Response deleteCourier(String courierId) {
         return given()
                 .delete("/api/v1/courier/" + courierId);
     }
 
+    @Step("Получение ID курьера")
     public static String getCourierId(String login, String password) {
         Response loginResponse = loginCourier(login, password);
-        if (loginResponse.statusCode() == 200) {
+        if (loginResponse != null && loginResponse.statusCode() == 200) {
             return loginResponse.jsonPath().getString("id");
         }
         return null;
     }
 
+    @Step("Удаление курьера по логину")
     public static void deleteCourierByLogin(String login, String password) {
         if (login != null && password != null) {
             String courierId = getCourierId(login, password);
@@ -46,6 +52,7 @@ public class CourierApi {
         }
     }
 
+    @Step("Безопасное удаление курьера")
     public static boolean safeDeleteCourier(String login, String password) {
         try {
             if (login == null || password == null) return false;
